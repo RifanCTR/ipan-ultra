@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>IPAN ULTRA — Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+
+  <style>
+    body { padding-bottom: calc(85px + env(safe-area-inset-bottom)); }
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 13px 16px;
+      padding-top: calc(13px + env(safe-area-inset-top));
+      background: #151515ed; border-bottom: 1px solid #333;
+      backdrop-filter: blur(14px);
+    }
+    .topbar .brand { font-size: 19px; }
+    .profile-name {
+      max-width: 45%; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; color: var(--muted); font-size: 12px;
+    }
+    main { max-width: 760px; margin: auto; padding: 18px 15px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .hero {
+      padding: 23px 19px; border: 1px solid #483025; border-radius: 18px;
+      background: radial-gradient(ellipse at 100% 0%, #fc52003b, transparent 55%), #202020;
+    }
+    .hero h1 { font-size: clamp(27px, 7vw, 36px); letter-spacing: -1px; }
+    .hero p { color: var(--muted); line-height: 1.65; }
+    h2 { font-size: 18px; margin: 20px 0 11px; }
+
+    .stats {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px; margin-top: 10px;
+    }
+    .stat {
+      min-width: 0; padding: 10px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px;
+    }
+    .stat-label { color: var(--muted); font-size: 10px; }
+    .stat-value {
+      margin-top: 5px; font-size: clamp(19px, 5vw, 25px);
+      font-weight: 850; overflow-wrap: anywhere;
+    }
+
+    .panel {
+      padding: 13px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 13px;
+    }
+    .progress-track {
+      height: 8px; margin: 13px 0; background: #393939;
+      border-radius: 20px; overflow: hidden;
+    }
+    .progress-fill { height: 100%; background: var(--orange); width: 0%; }
+    .progress-row {
+      display: flex; justify-content: space-between; gap: 10px;
+      color: var(--muted); font-size: 12px;
+    }
+
+    .period-panel { margin-top: 12px; padding: 12px; }
+    .period-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-bottom: 10px;
+    }
+    .period-head h2 { margin: 0; font-size: 16px; }
+    .period-tabs {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 4px; padding: 4px; background: #111;
+      border-radius: 9px; margin-bottom: 9px;
+    }
+    .period-tab {
+      border: 0; border-radius: 7px; padding: 8px 4px;
+      color: #aaa; background: transparent; font-size: 11px; font-weight: 800;
+    }
+    .period-tab.active { background: #422717; color: #ffb58e; }
+    .period-selectors {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 7px; margin-bottom: 10px;
+    }
+    .period-selectors select {
+      min-width: 0; width: 100%; padding: 8px;
+      border: 1px solid #414141; border-radius: 8px;
+      background: #111; color: white; font-size: 12px;
+    }
+    .period-stats {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+    }
+    .period-stat {
+      min-width: 0; padding: 9px 7px; border: 1px solid #333;
+      border-radius: 9px; background: #191919;
+    }
+    .period-stat span { display: block; color: var(--muted); font-size: 10px; }
+    .period-stat strong {
+      display: block; margin-top: 5px;
+      font-size: clamp(14px, 4vw, 19px); overflow-wrap: anywhere;
+    }
+    .period-note { color: var(--muted); font-size: 10px; margin-top: 9px; }
+    .chart-wrap { margin-top: 12px; }
+    .chart-title { font-size: 12px; font-weight: 800; margin-bottom: 9px; }
+    .bar-chart {
+      display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 5px; align-items: end; min-height: 100px;
+    }
+    .bar-item {
+      display: flex; flex-direction: column; justify-content: flex-end;
+      align-items: center; gap: 5px; min-width: 0; height: 100px;
+    }
+    .bar-value { color: #bbb; font-size: 9px; white-space: nowrap; }
+    .bar-track {
+      width: 100%; height: 66px; display: flex; align-items: flex-end;
+      background: #242424; border-radius: 5px; overflow: hidden;
+    }
+    .bar-fill {
+      width: 100%; min-height: 2px; border-radius: 5px 5px 0 0;
+      background: linear-gradient(0deg, #b83c08, #ff8b4a);
+    }
+    .bar-label { color: var(--muted); font-size: 9px; text-align: center; white-space: nowrap; }
+
+    .activity-list { display: grid; gap: 9px; }
+    .activity {
+      display: flex; gap: 12px; padding: 12px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    }
+    .activity-body { min-width: 0; flex: 1; }
+    .activity-title { font-weight: 800; overflow-wrap: anywhere; }
+    .activity-meta {
+      color: var(--muted); font-size: 12px; line-height: 1.8;
+      margin-top: 5px; overflow-wrap: anywhere;
+    }
+    .activity-distance { margin-top: 7px; font-size: 19px; font-weight: 850; }
+    .activity-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .mini {
+      border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
+      background: #292929; color: white; font-size: 11px;
+    }
+    .empty {
+      padding: 25px 14px; color: var(--muted); text-align: center;
+      border: 1px dashed #444; border-radius: 12px; line-height: 1.7;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 750; }
+    .field input, .field select, .field textarea {
+      box-sizing: border-box; width: 100%; min-height: 44px; padding: 11px;
+      background: #111; border: 1px solid #414141; border-radius: 9px;
+      color: white; font: inherit;
+    }
+    .field textarea { min-height: 85px; resize: vertical; }
+    .field input[readonly] { color: #ffb58e; cursor: default; }
+    .form-card {
+      padding: 16px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 15px;
+    }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 11px; }
+    .full { grid-column: 1 / -1; }
+    .pace-box { padding: 12px; background: #2b1c14; border: 1px solid #513020; border-radius: 10px; }
+    .pace-box strong { display: block; margin-top: 5px; color: var(--orange-light); font-size: 22px; }
+    .form-buttons { display: grid; gap: 9px; margin-top: 16px; }
+    .video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .video-card { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    .video-card video {
+      display: block; width: 100%; height: auto;
+      aspect-ratio: 9 / 16; object-fit: contain; background: #080808;
+    }
+    .video-info { padding: 10px; }
+    .video-info h3 { margin: 0; font-size: 12px; line-height: 1.5; }
+    .video-info p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .story { line-height: 1.8; color: #d2d2d2; }
+
+    .bottom-nav {
+      position: fixed; z-index: 20; bottom: 0; left: 0; right: 0;
+      display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+      padding: 7px 3px calc(7px + env(safe-area-inset-bottom));
+      background: #191919f5; border-top: 1px solid #333; backdrop-filter: blur(15px);
+    }
+    .nav-button {
+      min-width: 0; min-height: 50px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 5px;
+      border: 0; border-radius: 9px; background: transparent; color: #999;
+      font-size: 10px; font-weight: 750;
+    }
+    .nav-button.active { color: var(--orange-light); background: #302018; }
+    .nav-icon { display: flex; align-items: center; justify-content: center; }
+    .nav-icon svg {
+      width: 22px; height: 22px; stroke: currentColor; stroke-width: 2.5;
+      stroke-linecap: round; stroke-linejoin: round; fill: none;
+    }
+    .message {
+      margin: 12px 0; padding: 11px; border-radius: 9px;
+      background: #272727; color: var(--muted); font-size: 12px; line-height: 1.6;
+    }
+    .message.error { color: #ffb5a5; }
+    .message.success { color: #a8edc3; }
+    .setting-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--border);
+    }
+    .setting-row:last-child { border-bottom: 0; }
+    .setting-row input {
+      box-sizing: border-box; width: 45%; min-height: 40px;
+      background: #111; color: white; border: 1px solid #414141;
+      border-radius: 8px; padding: 9px;
+    }
+    .duration-inputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .duration-unit { display: flex; align-items: center; gap: 8px; }
+    .duration-unit input { min-width: 0; }
+    .duration-unit span { color: var(--muted); font-size: 12px; }
+    .hint { display: block; margin-top: 7px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    button:disabled { opacity: .6; cursor: wait; }
+
+    @media (min-width: 600px) {
+      main { padding: 24px; }
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 360px) {
+      main { padding: 12px 10px; }
+      .hero { padding: 18px 14px; }
+      .stat { padding: 9px; }
+      .video-grid { gap: 8px; }
+      .video-info { padding: 8px; }
+      .nav-button { font-size: 9px; }
+      .form-grid { grid-template-columns: minmax(0, 1fr); }
+      .full { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home" onclick="openPage('home'); return false;" style="text-decoration:none">
+      IPAN <span>ULTRA</span>
+    </a>
+    <span class="profile-name" id="profileName">Memuat akun...</span>
+  </header>
+
+  <main>
+    <div id="globalMessage" class="message" hidden role="status" aria-live="polite"></div>
+
+    <section class="page active" id="page-home">
+      <div class="hero">
+        <p class="eyebrow">YOUR JOURNEY, YOUR DISTANCE</p>
+        <h1 id="greeting">Selamat datang.</h1>
+        <p>Setiap kilometer punya cerita. Catat latihanmu dan lanjutkan perjalanan dengan ritmemu sendiri.</p>
+        <button class="btn btn-primary btn-block" type="button" onclick="openPage('add')">+ Catat Aktivitas</button>
+      </div>
+
+      <div class="panel period-panel">
+        <div class="period-head">
+          <h2>Statistik progres</h2>
+          <span class="period-note" id="periodLabel">Bulan ini</span>
+        </div>
+
+        <div class="period-tabs" role="group" aria-label="Pilih periode statistik">
+          <button type="button" class="period-tab" data-period="week">Minggu</button>
+          <button type="button" class="period-tab active" data-period="month">Bulan</button>
+          <button type="button" class="period-tab" data-period="year">Tahun</button>
+        </div>
+
+        <div class="period-selectors">
+          <select id="statsMonth" aria-label="Pilih bulan">
+            <option value="0">Januari</option><option value="1">Februari</option>
+            <option value="2">Maret</option><option value="3">April</option>
+            <option value="4">Mei</option><option value="5">Juni</option>
+            <option value="6">Juli</option><option value="7">Agustus</option>
+            <option value="8">September</option><option value="9">Oktober</option>
+            <option value="10">November</option><option value="11">Desember</option>
+          </select>
+          <select id="statsYear" aria-label="Pilih tahun"></select>
+        </div>
+
+        <div class="period-stats">
+          <div class="period-stat"><span>Total jarak</span><strong id="periodDistance">0 km</strong></div>
+          <div class="period-stat"><span>Aktivitas</span><strong id="periodActivities">0</strong></div>
+          <div class="period-stat"><span>Durasi</span><strong id="periodDuration">0j</strong></div>
+          <div class="period-stat"><span>Pace rata-rata</span><strong id="periodPace">--:--</strong></div>
+          <div class="period-stat"><span>Elevasi</span><strong id="periodElevation">0 m</strong></div>
+          <div class="period-stat"><span>Hari aktif</span><strong id="periodActiveDays">0</strong></div>
+        </div>
+
+        <div class="period-note" id="periodComparison">Belum ada aktivitas pada periode ini.</div>
+        <div class="chart-wrap">
+          <div class="chart-title" id="periodChartTitle">Jarak per minggu dalam bulan</div>
+          <div class="bar-chart" id="periodChart"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Total jarak sepanjang waktu</div>
+          <div class="stat-value" id="totalDistance">0</div>
+          <div class="stat-label">km</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total aktivitas</div>
+          <div class="stat-value" id="totalActivities">0</div>
+          <div class="stat-label">sesi latihan</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total durasi</div>
+          <div class="stat-value" id="totalDuration">0</div>
+          <div class="stat-label">jam</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total elevasi naik</div>
+          <div class="stat-value" id="totalElevation">0</div>
+          <div class="stat-label">meter</div>
+        </div>
+      </div>
+
+      <h2>Target jarak</h2>
+      <div class="panel">
+        <div class="progress-row"><span>Perjalanan menuju target</span><strong id="goalPercent">0%</strong></div>
+        <div class="progress-track"><div class="progress-fill" id="goalProgress"></div></div>
+        <div class="progress-row"><span id="goalCurrent">0 km terkumpul</span><span id="goalTarget">Target 100 km</span></div>
+      </div>
+
+      <h2>Aktivitas terbaru</h2>
+      <div class="activity-list" id="recentActivities"></div>
+
+      <h2>Alasan gue mulai berlari</h2>
+      <div class="panel story">
+        Buat gue, lari bukan cuma soal pace atau siapa yang paling cepat. Gue ingin membuktikan bahwa gue bisa terus melangkah, bahkan ketika prosesnya berat.
+        <br><br>
+        Gue punya keinginan untuk menjelajah jalur trail, menyelesaikan jarak yang makin jauh, dan suatu hari mencoba 50 km sampai 100 km. Gue nggak harus langsung hebat. Gue cuma perlu belajar konsisten, menghargai proses, dan tahu kapan harus beristirahat.
+        <br><br>
+        Ada hari ketika badan terasa kuat, ada juga hari ketika latihan harus berhenti karena kondisi tubuh. Itu bukan berarti perjalanan selesai. Istirahat, pulih, lalu mulai lagi ketika sudah siap.
+        <br><br>
+        IPAN ULTRA gue jadikan tempat menyimpan perjalanan ini: bukan untuk mengejar pengakuan, melainkan supaya setiap langkah dan usaha nggak terlupakan.
+      </div>
+    </section>
+
+    <section class="page" id="page-add">
+      <p class="eyebrow">TRAINING LOG</p>
+      <h1 id="formTitle">Catat aktivitas</h1>
+      <p class="muted">Isi jarak dan durasi. Pace dihitung otomatis.</p>
+      <form id="activityForm" class="form-card">
+        <input type="hidden" id="activityId">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="activityName">Nama aktivitas</label>
+            <input id="activityName" maxlength="80" required placeholder="Contoh: Morning Run">
+          </div>
+          <div class="field">
+            <label for="activityType">Jenis</label>
+            <select id="activityType">
+              <option>Lari</option><option>Trail Run</option><option>Jalan</option>
+              <option>Hiking</option><option>Bersepeda</option><option>Treadmill</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="activityDate">Tanggal</label>
+            <input type="date" id="activityDate" required>
+          </div>
+          <div class="field full">
+            <label for="distance">Jarak (km)</label>
+            <input id="distance" type="text" inputmode="numeric" autocomplete="off" maxlength="6" required placeholder="12.00">
+          </div>
+          <div class="field full">
+            <label>Durasi</label>
+            <div class="duration-inputs">
+              <div class="duration-unit"><input id="duration-hours" type="number" min="0" max="999" step="1" inputmode="numeric" aria-label="Durasi dalam jam"><span>jam</span></div>
+              <div class="duration-unit"><input id="duration-minutes" type="number" min="0" max="59" step="1" inputmode="numeric" aria-label="Durasi dalam menit"><span>menit</span></div>
+              <div class="duration-unit"><input id="duration-seconds" type="number" min="0" max="59" step="1" inputmode="numeric" aria-label="Durasi dalam detik"><span>detik</span></div>
+            </div>
+            <small class="hint">Contoh: 1 jam, 45 menit, 30 detik.</small>
+          </div>
+          <div class="field full">
+            <div class="pace-box">
+              <span class="muted">Pace rata-rata</span>
+              <strong id="pacePreview">--:-- /km</strong>
+              <span class="muted" style="font-size:11px">Menit per kilometer, dihitung otomatis</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="elevation">Elevasi naik (m)</label>
+            <input id="elevation" type="number" min="0" max="100000" step="1" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="field">
+            <label for="feeling">Kondisi</label>
+            <select id="feeling"><option>Nyaman</option><option>Sedang</option><option>Berat</option><option>Pemulihan</option></select>
+          </div>
+          <div class="field full">
+            <label for="notes">Catatan (opsional)</label>
+            <textarea id="notes" maxlength="1000" placeholder="Rute, cuaca, atau pengalaman latihan..."></textarea>
+          </div>
+        </div>
+        <div class="form-buttons">
+          <button class="btn btn-primary btn-block" id="saveButton" type="submit">Simpan Aktivitas</button>
+          <button class="btn btn-block" type="button" style="background:#292929;color:white" onclick="resetForm();openPage('home')">Batal</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="page" id="page-history">
+      <p class="eyebrow">TRAINING LOG</p><h1>Riwayat aktivitas</h1>
+      <p class="muted">Data aktivitas dimuat dari akun yang sedang login.</p>
+      <div class="field">
+        <label for="historyFilter">Filter jenis</label>
+        <select id="historyFilter">
+          <option>Semua</option><option>Lari</option><option>Trail Run</option>
+          <option>Jalan</option><option>Hiking</option><option>Bersepeda</option><option>Treadmill</option>
+        </select>
+      </div>
+      <div class="activity-list" id="historyActivities"></div>
+    </section>
+
+    <section class="page" id="page-motivation">
+      <p class="eyebrow">KEEP MOVING</p><h1>Video motivasi</h1>
+      <p class="muted">Fokus pada perjalanan dan tujuanmu sendiri.</p>
+      <div class="video-grid" id="videoGrid"></div>
+    </section>
+
+    <section class="page" id="page-settings">
+      <p class="eyebrow">PERSONAL SETTINGS</p><h1>Pengaturan</h1>
+      <div class="panel">
+        <div class="setting-row"><label for="goalInput">Target jarak (km)</label><input id="goalInput" type="number" min="1" max="100000" value="100"></div>
+        <button class="btn btn-primary btn-block" id="saveGoalButton" type="button" style="margin-top:15px" onclick="saveGoal()">Simpan Target</button>
+      </div>
+      <h2>Akun</h2>
+      <div class="panel">
+        <p class="muted">Aktivitasmu terhubung ke akun yang sedang login. Logout tidak menghapus data dari database.</p>
+        <button class="btn btn-block" type="button" style="background:#38211d;color:#ffb1a0" onclick="logout()">Logout</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navigasi">
+    <button class="nav-button active" data-page="home" type="button" onclick="openPage('home')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7"/><path d="M5 9v12h14V9M9 21v-7h6v7"/></svg></span>Beranda
+    </button>
+    <button class="nav-button" data-page="add" type="button" onclick="openPage('add')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>Catat
+    </button>
+    <button class="nav-button" data-page="history" type="button" onclick="openPage('history')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>Riwayat
+    </button>
+    <button class="nav-button" data-page="motivation" type="button" onclick="openPage('motivation')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></svg></span>Motivasi
+    </button>
+    <button class="nav-button" data-page="settings" type="button" onclick="openPage('settings')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.2 1-1.4 2.4-1.5-.5a8 8 0 0 1-1.7 1l-.3 1.6h-2.8l-.3-1.6a8 8 0 0 1-1.7-1l-1.5.5-1.4-2.4 1.2-1a7 7 0 0 1 0-2l-1.2-1 1.4-2.4 1.5.5a8 8 0 0 1 1.7-1l.3-1.6h2.8l.3 1.6a8 8 0 0 1 1.7 1l1.5-.5 1.4 2.4-1.2 1a7 7 0 0 1 0 2Z" transform="translate(-1 -1) scale(1.08)"/></svg></span>Akun
+    </button>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase.js"></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>
